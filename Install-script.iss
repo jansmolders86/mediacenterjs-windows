@@ -37,6 +37,9 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 [Files]
 Source: "C:\Users\Jan\Downloads\mediacenterjs\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs; Permissions: everyone-full
 
+[Icons]
+Name: "{group}\mediacenterjs.exe"; Filename: "{app}\mediacenterjs.exe";
+
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
 
