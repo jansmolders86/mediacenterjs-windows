@@ -38,15 +38,8 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 Source: "C:\Users\Jan\Downloads\mediacenterjs\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs; Permissions: everyone-full
 
 [Icons]
-Name: "{group}\mediacenterjs.exe"; Filename: "{app}\mediacenterjs.exe";
-
-; NOTE: Don't use "Flags: ignoreversion" on any shared system files
-
-
-; Here's an example of how you could use a start menu item for just Chrome, no batch file
-;Name: "{group}\{#MyAppName}"; Filename: "{pf32}\Google\Chrome\Application\chrome.exe"; Parameters: "--app=http://localhost:5566 --user-data-dir=%APPDATA%\{#MyAppShortName}\"; IconFilename: "{app}\{#MyAppIcon}"
-
-
+Name: "{group}\mediacenterjs"; Filename: "{app}\mediacenterjs.exe";
+;Name: "{group}\mediacenterjs chrome"; Filename: "{pf32}\Google\Chrome\Application\chrome.exe"; Parameters: "--app=http://localhost:3000"; IconFilename: "C:\Users\Jan\Documents\GitHub\mediacenterjs\public\core\favicon.ico"
 
 ; postinstall launch
 
@@ -61,8 +54,6 @@ begin
   Filename:"msiexec.exe"; Parameters: "/i ""{app}\dist\node\node-v0.10.26-x86.msi""" ; 
 [Code]
 end.
-
-;Filename: "{app}\npm-update.bat"; Description: "Download and install MediacenterJS dependencies (Only if Nodejs was already installed, otherwise, reboot and run manually)"; Flags: shellexec postinstall skipifsilent
 
 ; Add Firewall Rules
 Filename: "{sys}\netsh.exe"; Parameters: "advfirewall firewall add rule name=""Node In"" program=""{pf64}\nodejs\node.exe"" dir=in action=allow enable=yes"; Flags: runhidden;
