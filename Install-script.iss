@@ -2,7 +2,7 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 
 #define MyAppName "MediacenterJS"
-#define MyAppVersion "0.0.65"
+#define MyAppVersion "0.0.66"
 #define MyAppPublisher "Jan Smolders"
 #define MyAppURL "http://www.mediacenterjs.com/"
 
