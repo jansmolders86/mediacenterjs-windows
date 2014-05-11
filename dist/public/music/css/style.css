@@ -1,0 +1,242 @@
+/*
+	MediaCenterJS - A NodeJS based mediacenter solution
+	
+    Copyright (C) 2014 - Jan Smolders
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+#header{z-index:5;}
+#header h1 { padding-top: 9px;}
+
+/** Library **/
+
+#container{
+    padding:100px 80px;
+    position:relative;
+    min-height: 100%;
+    width:75%;
+}
+
+#library{
+    float:left;
+	height:100%;
+	max-height:100%;
+	overflow-x:hidden;
+}
+
+#library.side{
+    margin-left:300px;
+}
+
+#library .album{
+    width:174px;
+    height: 250px;
+    float:left;
+    background:#fff;
+    margin:10px;
+    position:relative;
+    cursor:pointer;
+}
+
+#library.side .album img,
+#library.side .album span{
+    opacity:0.5;
+    position:relative;
+    cursor:pointer;
+}
+
+#library.side .album:hover img,
+#library.side .album.current img
+#library.side .album:hover span{
+    opacity:1;
+}
+
+#library .album:hover img,
+#library .album.current img{
+	opacity:0.5;
+}
+
+#library .album img{
+    width:174px;
+    height:174px;
+}
+
+.album-title,
+.album-artist,
+.album-year{
+    font-size:12px;
+    font-weight:bold;
+    width:100%;
+    clear:both;
+    display:block;
+}
+
+#library .album .album-artist,
+#library .album .album-year {
+    font-weight: normal;
+}
+
+.albums {
+    margin:0;
+    padding:0;
+}
+
+.album.current ol{
+    list-style-type: decimal;
+    list-style-position: inside;
+    margin:0;
+    padding:0;
+}
+
+/** Playlist **/
+
+#playlist {
+    float: left;
+    width: 358px;
+    background: #e7e7e7;
+    overflow-y: auto;
+    overflow-x: hidden;
+    height: 100%;
+    min-height: 100%;
+    height: auto;
+    position: absolute;
+    top:75px;
+    left:0px;
+    border-right:1px solid #ccc;
+}
+
+#playlist img{ margin-bottom:5px; cursor:pointer;}
+#playlist .album-title{font-size:14px;}
+#playlist .album{ margin-top:10px; padding:10px; }
+
+#playlist .album li{
+    padding:5px 0;
+    border-bottom:1px solid #ccc;
+    min-height: 25px;
+    line-height: 25px;
+    cursor:pointer;
+}
+
+#playlist .album li:hover{ background:#fff; }
+#playlist ol li{list-style:decimal;}
+#playlist ol li .play{
+    visibility:hidden;
+    font-size:12px;
+}
+#playlist .album.current ol li.current .play{ visibility:visible;}
+#playlist .album ol{ padding-left:0;}
+#playlist .remove{
+	position: absolute;
+	top: 25px;
+	left: 140px;
+	color: #fff;
+	font-size: 32px;
+	z-index: 1;
+	cursor:pointer;
+}
+
+#playlist .album img{ z-index: 2; }
+#playlist .list:hover img{ opacity:0.3 }
+
+/** Player **/
+
+#player{
+    width:320px;
+    padding-bottom:50px;
+    margin-left:20px;
+    bottom: 0;
+    left: 80px;
+    z-index:99;
+    position: relative!important;
+    margin-top: 20px;
+}
+
+#player i{
+    display:block;
+    padding:5px;
+    float:left;
+    font-size:32px;
+    color:#333;
+}
+
+#player .left{float:left;}
+#player .middle{float: left; margin-left: 96px;}
+#player .right{float:right;}
+
+/*
+
+#progressBar { 
+    border:1px solid #ccc; 
+    color:#fff; 
+    width:295px; 
+    height:15px;
+    border-radius:5px;
+    padding:0;
+    margin:0 0 20px 0;
+}
+#progress {
+   background-color:#FB8521;
+   height:15px;
+   display:block;
+}
+*/
+
+.ui.progress {
+    border: 1px solid rgba(0,0,0,.1);
+    width: 100%;
+    height: 35px;
+    background-color: #FAFAFA;
+    padding: 5px;
+    border-radius: .3125em;
+    -webkit-box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    -ms-box-sizing: border-box;
+    box-sizing: border-box;
+    margin-bottom: 20px;
+}
+
+
+.bar{
+    -webkit-animation: progress-striped 3s linear infinite;
+    -webkit-background-size: 30px 30px;
+    background-size: 30px 30px;
+    display: inline-block;
+    height: 100%;
+    background-color: #CCC;
+    border-radius: 3px;
+    -webkit-transition: width 1s ease-in-out,background-color 1s ease-out;
+    -moz-transition: width 1s ease-in-out,background-color 1s ease-out;
+    transition: width 1s ease-in-out,background-color 1s ease-out;
+    background-image: linear-gradient(135deg,rgba(255,255,255,.15)25%,transparent 25%,transparent 50%,rgba(255,255,255,.15)50%,rgba(255,255,255,.15)75%,transparent 75%,transparent);
+}
+
+@-webkit-keyframes progress-striped{
+    0%{background-position:0 0}
+    100%{background-position:60px 0}
+}
+
+@keyframes progress-striped{
+    0%{background-position:0 0}
+    100%{background-position:60px 0}
+}
+
+@media only screen and (min-width: 320px) and (max-width: 529px) {
+    /* For phone layouts only */
+    #container{padding:0px; width:100%;}
+    #header h1 { padding-top: 2px;}
+    #library{padding-left:5px; }
+    #library.side{display:none;}
+    #library .album{ width:150px; margin:5px;}
+    #library .album img{ width:150px; height:150px;}
+    #playlist {padding-bottom:100px;}
+}
