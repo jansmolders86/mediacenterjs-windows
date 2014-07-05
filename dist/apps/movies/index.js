@@ -1,6 +1,6 @@
 /*
-	MediaCenterJS - A NodeJS based mediacenter solution
-	
+    MediaCenterJS - A NodeJS based mediacenter solution
+
     Copyright (C) 2013 - Jan Smolders
 
     This program is free software: you can redistribute it and/or modify
@@ -40,36 +40,52 @@ exports.index = function(req, res){
 };
 
 exports.get = function(req, res){
-	var infoRequest = req.params.id,
-		optionalParam = req.params.optionalParam,
-        serveToFrontEnd = null
-	
-	if(infoRequest === 'filter') {
-		functions.filter(req, res, optionalParam);
-	}
-	else if (!optionalParam) {
-		switch(infoRequest) {
-			case('getGenres'):
-				functions.getGenres(req, res);
-				break;
-			case('loadItems'):
+    var infoRequest = req.params.id,
+        optionalParam = req.params.optionalParam,
+        platform = req.params.action,
+        serveToFrontEnd = null;
+
+    if(infoRequest === 'filter') {
+        functions.filter(req, res, optionalParam);
+    }
+    else if (!optionalParam) {
+        switch(infoRequest) {
+            case('getGenres'):
+                functions.getGenres(req, res);
+                break;
+            case('loadItems'):
+                serveToFrontEnd = true;
                 functions.loadItems(req, res, serveToFrontEnd);
-				break;
+                break;
             case('backdrops'):
                 functions.backdrops(req, res);
                 break;
-		}	
-	}
+        }
+    }
 
-    if(optionalParam === 'play'){
+    if(platform !== undefined && optionalParam === 'play'){
         var movieTitle = infoRequest.replace(/\+/g, " ");
-        functions.playMovie(req, res, movieTitle);
+        switch(platform) {
+            case('desktop'):
+                functions.playMovie(req, res, platform, movieTitle);
+                break;
+            case('ios'):
+                functions.playMovie(req, res, platform, movieTitle);
+                break;
+            case('android'):
+                functions.playMovie(req, res, platform, movieTitle);
+                break;
+        }
     }
 };
 
 
 exports.post = function(req, res){
+    var data = req.body;
     if(req.params.id === 'sendState'){
         functions.sendState(req, res);
+    }
+    else if(req.params.id === 'edit'){
+        functions.edit(req, res, data);
     }
 }

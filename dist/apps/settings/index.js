@@ -21,20 +21,13 @@ exports.engine = 'jade';
 var express = require('express')
 , app = express()
 , fs = require('fs')
-, os = require('os')
 , ini = require('ini')
 , http = require('http')
 , DeviceInfo = require('../../lib/utils/device-utils')
 , config = ini.parse(fs.readFileSync('./configuration/config.ini', 'utf-8'));
 
-var dblite = require('dblite')
-if(os.platform() === 'win32'){
-    dblite.bin = "./bin/sqlite3/sqlite3";
-}
-var db = dblite('./lib/database/mcjs.sqlite');
-db.on('info', function (text) { console.log(text) });
-db.on('error', function (err) { console.error('Database error: ' + err) });
-
+var database = require('../../lib/utils/database-connection');
+var db = database.db;
 
 exports.index = function(req, res, next){
 
@@ -85,6 +78,7 @@ exports.index = function(req, res, next){
                 spotifyUser: config.spotifyUser,
                 spotifyPass: config.spotifyPass,
                 themes:allThemes,
+                schedule:config.schedule,
                 devices:devices,
                 allowed: allowed,
                 port: config.port,

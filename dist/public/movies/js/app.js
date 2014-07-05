@@ -1,6 +1,6 @@
 /*
-	MediaCenterJS - A NodeJS based mediacenter solution
-	
+    MediaCenterJS - A NodeJS based mediacenter solution
+
     Copyright (C) 2014 - Jan Smolders
 
     This program is free software: you can redistribute it and/or modify
@@ -17,81 +17,161 @@
 */
 'use strict';
 
-var movieApp = angular.module('movieApp', []);
+var movieApp = angular.module('movieApp', ['ui.bootstrap']);
 
-movieApp.controller('movieCtrl', function($scope, $http,$document,$window, socket) {
+movieApp.controller('movieCtrl', function($scope, $http, $modal) {
     $scope.focused = 0;
+    $scope.serverMessage = 0;
+    $scope.serverStatus= '';
+
     $http.get('/movies/loadItems').success(function(data) {
         $scope.movies = data;
-        remote(socket, $scope);
-        keyevents(socket, $scope);
     });
-    
-    $scope.orderProp = 'genre';
-                                     
+
     $scope.playMovie = function(data){
         $scope.playing = true;
         playMovie(data, $http);
     }
-    
-    $scope.changeBackdrop = function(backdrop){
-        var elem = document.getElementById("backdropimg");
-        elem.src = backdrop;
-    }
-});
 
-
-movieApp.directive("scroll", function ($document,$window) {
-    return function($scope, element, attrs) {
-       angular.element($window).bind("scroll", function() {
-             if (this.pageYOffset >= 100) {
-                 $scope.boolChangeClass = true;
-             } else {
-                 $scope.boolChangeClass = false;
-             }
+    $scope.open = function (movie) {
+        var modalInstance = $modal.open({
+            templateUrl: 'editModal.html',
+            controller: ModalInstanceCtrl,
+            size: 'md',
+            resolve: {
+                current: function () {
+                    return movie;
+                }
+            }
         });
-    };
-});
+    }
 
-movieApp.factory('socket', function ($rootScope) {
-    var socket = io.connect('http://127.0.0.1:3001');
-    socket.on('connect', function(data){
-        socket.emit('screen');
-    });
-    return {
-        on: function (eventName, callback) {
-            socket.on(eventName, function () {
-                var args = arguments;
-                $rootScope.$apply(function () {
-                    callback.apply(socket, args);
-                });
+    var ModalInstanceCtrl = function ($scope, $modalInstance, current) {
+        $scope.edit ={};
+        $scope.current = current;
+
+        $scope.cancel = function () {
+            $modalInstance.dismiss('cancel');
+        };
+
+        $scope.editItem = function(){
+
+            if($scope.edit.title === '' || $scope.edit.title === null || $scope.edit.title === undefined ){
+                if($scope.current.title  !== undefined || $scope.current.title !== null){
+                    $scope.edit.title = $scope.current.title;
+                } else {
+                    $scope.edit.title = '';
+                }
+            }
+
+            if($scope.edit.backdrop_path === '' || $scope.edit.backdrop_path === null || $scope.edit.backdrop_path === undefined ){
+                if($scope.current.backdrop_path  !== undefined || $scope.current.backdrop_path !== null){
+                    $scope.edit.backdrop_path = $scope.current.backdrop_path;
+                } else {
+                    $scope.edit.backdrop_path = '/movies/css/img/nodata.png';
+                }
+            }
+
+            if($scope.edit.backdrop_path === '' || $scope.edit.backdrop_path === null || $scope.edit.backdrop_path === undefined ){
+                if($scope.current.backdrop_path  !== undefined || $scope.current.backdrop_path !== null){
+                    $scope.edit.backdrop_path = $scope.current.backdrop_path;
+                } else {
+                    $scope.edit.backdrop_path = '/movies/css/img/backdrop.png';
+                }
+            }
+
+            $http({
+                method: "post",
+                data: {
+                    newTitle            : $scope.edit.title,
+                    newPosterPath       : $scope.edit.poster_path,
+                    newBackdropPath     : $scope.edit.backdrop_path,
+                    currentMovie        : $scope.current.original_name
+                },
+                url: "/movies/edit"
+            }).success(function(data, status, headers, config) {
+                location.reload();
             });
-        },
-        emit: function (eventName, data, callback) {
-            socket.emit(eventName, data, function () {
-                var args = arguments;
-                $rootScope.$apply(function () {
-                    if (callback) {
-                        callback.apply(socket, args);
-                    }
-                });
-            })
         }
     };
+
+    $scope.changeBackdrop = function(movie){
+        var elem = document.getElementById("backdropimg");
+        elem.src = movie.backdrop;
+    }
+
+    $scope.changeSelected = function(movie){
+        var elem = document.getElementById("backdropimg");
+        elem.src = movie.backdrop_path;
+        $scope.focused = $scope.movies.indexOf(movie);
+    }
+
+    var setupSocket = {
+        async: function() {
+            var promise = $http.get('/configuration/').then(function (response) {
+                var configData  = response.data;
+                var socket      = io.connect(configData.localIP + ':'+configData.remotePort);
+                socket.on('connect', function(data){
+                    socket.emit('screen');
+                });
+                return {
+                    on: function (eventName, callback) {
+                        socket.on(eventName, function () {
+                            var args = arguments;
+                            $scope.$apply(function () {
+                                callback.apply(socket, args);
+                            });
+                        });
+
+                    },
+                    emit: function (eventName, data, callback) {
+                        socket.emit(eventName, data, function () {
+                            var args = arguments;
+                            $scope.$apply(function () {
+                                if (callback) {
+                                    callback.apply(socket, args);
+                                }
+                            });
+                        });
+                    }
+                };
+                return data;
+            });
+            return promise;
+        }
+    };
+
+    setupSocket.async().then(function(data) {
+        if (typeof data.on !== "undefined") {
+            $scope.remote       = remote(data, $scope);
+            $scope.keyevents    = keyevents(data, $scope);
+        }
+    });
+
 });
 
 function playMovie(data, $http){
     var orginalName = data;
-    $http.get('/movies/'+orginalName+'/play').success(function(data) {
 
-        var fileName                =  orginalName   
+    var platform = 'desktop';
+    if (navigator.userAgent.match(/Android/i)){
+        platform = 'android';
+    } else if(navigator.userAgent.match(/iPhone/i)
+            || navigator.userAgent.match(/iPhone/i)
+            || navigator.userAgent.match(/iPad/i)
+            || navigator.userAgent.match(/iPod/i))
+    {
+        platform = 'ios';
+    }
+
+    $http.get('/movies/'+orginalName+'/play/'+platform).success(function(data) {
+        var fileName                =  orginalName
             , outputFile            =   fileName.replace(/ /g, "-")
             , extentionlessFile     =   outputFile.replace(/\.[^/.]+$/, "")
             , videoUrl              =   "/data/movies/"+extentionlessFile+".mp4"
-            , subtitleUrl           =   "/data/movies/"+extentionlessFile+".srt"  
+            , subtitleUrl           =   "/data/movies/"+extentionlessFile+".srt"
             , playerID              =   'player'
             , homeURL               =   '/movies/';
         videoJSHandler(playerID, data, videoUrl, subtitleUrl, orginalName,homeURL, 5000);
-
-    });  
+    });
 }

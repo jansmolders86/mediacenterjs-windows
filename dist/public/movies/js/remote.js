@@ -1,6 +1,6 @@
 /*
-	MediaCenterJS - A NodeJS based mediacenter solution
-	
+    MediaCenterJS - A NodeJS based mediacenter solution
+
     Copyright (C) 2014 - Jan Smolders
 
     This program is free software: you can redistribute it and/or modify
@@ -16,7 +16,6 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 function remote(socket, $scope){
-    var albums = $scope.albums;
     socket.on('controlling', function(data){
         switch(data.action) {
             case "goLeft" :
@@ -35,22 +34,36 @@ function remote(socket, $scope){
                 pushBack(socket,$scope);
                 break;
             case "mute" :
-                pushMute(socket,$scope);   
+                pushMute(socket,$scope);
                 break;
             case "dashboard" :
                 pushDashboard(socket,$scope);
                 break;
         }
     });
+
+    socket.on('sending', function(data){
+        $('#search').val(data);
+        $scope.query = data;
+    });
+
+    socket.on('progress', function (data) {
+        console.log(data.msg)
+        $scope.serverMessage = data.msg;
+    });
+    
+    socket.on('serverStatus', function (data) {
+        $scope.serverStatus = data.msg;
+    });
 }
 
 
 // Catch and set keyevents
 function keyevents(socket, $scope){
-    document.onkeydown=onKeyDownHandler; 
-    
+    document.onkeydown=onKeyDownHandler;
+
     function onKeyDownHandler(e){
-        
+
         if (typeof e == 'undefined' && window.event) { e = window.event; }
 
         switch(e.keyCode) {
@@ -65,7 +78,6 @@ function keyevents(socket, $scope){
                 pushEnter(socket, $scope);
             break;
             case 8  :   //backspace
-                e.preventDefault();
                 pushBack(socket, $scope);
             break;
             case 32 :   //space
@@ -83,6 +95,11 @@ function goLeft(socket, $scope){
         index = 0;
     }
     $scope.focused = index;
+
+    //jQuery
+    $('.current').scrollintoview({direction: "vertical"});
+    $('.current').focus();
+
     $scope.$apply(function(){
         $scope.focused;
     });
@@ -96,6 +113,11 @@ function goRight(socket, $scope){
         index = 0;
     }
     $scope.focused = index;
+
+    //jQuery
+    $('.current').scrollintoview({direction: "vertical"});
+    $('.current').focus();
+
     $scope.$apply(function(){
         $scope.focused;
     });
@@ -114,11 +136,14 @@ function pushPause(socket, $scope){
 }
 
 function pushBack(socket, $scope){
-    if($scope.playing === true) {
-        videojs("player").destroy();
-        window.location = "/movies/";
-    } else {
-        window.location = "/";
+    if(!document.activeElement === $('input')){
+        e.preventDefault();
+        if($scope.playing === true) {
+            videojs("player").destroy();
+            window.location = "/movies/";
+        } else {
+            window.location = "/";
+        }
     }
 }
 
@@ -135,3 +160,5 @@ function pushMute(socket, $scope){
 function pushDashboard(socket, $scope, player, audio){
     window.location = "/";
 }
+
+

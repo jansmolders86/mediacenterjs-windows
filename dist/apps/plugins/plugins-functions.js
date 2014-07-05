@@ -1,3 +1,20 @@
+/*
+	MediaCenterJS - A NodeJS based mediacenter solution
+	
+    Copyright (C) 2014 - Jan Smolders
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
 var express = require('express')
 	, app = express()
 	, fs = require('fs')
@@ -72,11 +89,18 @@ exports.getAvailablePlugins = function(req, res){
 			for (var key in pluginList) {
 				var obj = pluginList[key];
 		   	  	var compareInfo = isPluginCurrentlyInstalled(installedPlugins, obj.name, obj.version);          
+
+                var d = new Date(obj.time);
+                var curr_date = d.getDate();
+                var curr_month = d.getMonth() + 1; //Months are zero based
+                var curr_year = d.getFullYear();
+                var showDate = curr_date + "-" + curr_month + "-" + curr_year;
+                
 		   		plugins.push({
 					name: obj.name.replace(pluginPrefix, ''), //Remove the Mediacenterjs-
 					desc: obj.description,
 					author: obj.maintainers[0].replace('=',''),
-					date: obj.time,
+                    date: showDate,
 					version: obj.version,
 					keywords: obj.keywords,
 					isInstalled: compareInfo.isInstalled,

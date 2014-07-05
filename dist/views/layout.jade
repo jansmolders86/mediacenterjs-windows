@@ -1,17 +1,17 @@
 doctype 5
-
-html(lang="en")
+block declarations
+    - var additional_title      = undefined;
+    - var use_knockout          = false;
+    - var use_angular           = false;
+    - var include_validation    = false;
+    - var include_remote        = true;
+    - var body_id               = '';
+    - var body_class            = '';
+    - var angular_app           = undefined;
+    - var angular_body_ctrl     = undefined;
+    - var angular_body_class    = undefined;
+html(lang="en",ng-app=angular_app)
     head
-        block declarations
-            - var additional_title      = undefined;
-            - var use_knockout          = false;
-            - var use_angular           = false;
-            - var include_validation    = false;
-            - var include_remote        = true;
-            - var body_id               = '';
-            - var body_class            = '';
-            - var angular_app           = undefined;
-
         if !additional_title
             title MediacenterJS
         else
@@ -21,17 +21,18 @@ html(lang="en")
         meta(name="apple-mobile-web-app-capable" content="yes")
         meta(name="apple-mobile-web-app-status-bar-style" content="black")
         meta(charset="utf-8")
-        meta(name="viewport" content="width=device-width, initial-scale=1.0")
+        meta(name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no")
 
         block additional_metadata
 
         // Core inclusion
-        link(rel='stylesheet', href='http://fonts.googleapis.com/css?family=Open+Sans+Condensed:300|Open+Sans')
+        link(rel='stylesheet', href='http://fonts.googleapis.com/css?family=Open+Sans+Condensed:300|Open+Sans:300,400,600,700,800')
 
+        link(rel='stylesheet', href='/core/css/bootstrap.min.css')
         link(rel='stylesheet', href='/core/css/style.css')
         link(rel='stylesheet', href='/core/css/icon.css')
         link(rel='stylesheet', href='/core/css/jquery-ui-1.10.3.custom.min.css')
-        
+
         script(src="/core/js/plugins/jquery/jquery-1.8.2.min.js")
         script(src="/core/js/plugins/jquery/jquery-ui-1.10.3.min.js")
 
@@ -52,7 +53,8 @@ html(lang="en")
             script(src="/core/js/plugins/angular/angular-route.min.js")
             script(src="/core/js/plugins/angular/angular-animate.min.js")
 
-        script(src="/core/js/plugins/perfect-scrollbar.js")
+        script(src="/core/js/plugins/fastclick.js")
+        script(src="/core/js/plugins/countries.js")
         script(src="/core/js/plugins/socket.io.min.js")
         script(src="/core/js/plugins/jquery/jquery.scrollintoview.min.js")
         script(src="/core/js/plugins/jquery/jquery.idle-timer.js")
@@ -63,10 +65,10 @@ html(lang="en")
             script(src="/core/js/plugins/validation/jquery.validate.min.js")
             script(src="/core/js/plugins/validation/jquery.validate.defaults.js")
             script(src="/core/js/plugins/validation/jquery.validate.rules.js")
-            
+
         if include_remote
             script(src="/core/js/jquery.remote.js")
-            
+
             script.
                 $(function(){
                     $('body').mcjsRemote();
@@ -84,11 +86,15 @@ html(lang="en")
                         return false;
                     });
                 }
+
+                window.addEventListener('load', function() {
+                    FastClick.attach(document.body);
+                }, false);
             });
 
         block additional_scripts
 
 
-body(id=body_id, class=body_class)
+body(id=body_id, class=body_class,ng-controller=angular_body_ctrl,ng-class=angular_body_class)
     block body
 

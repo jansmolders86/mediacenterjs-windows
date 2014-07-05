@@ -1,6 +1,6 @@
 /*
-	MediaCenterJS - A NodeJS based mediacenter solution
-	
+    MediaCenterJS - A NodeJS based mediacenter solution
+
     Copyright (C) 2013 - Jan Smolders
 
     This program is free software: you can redistribute it and/or modify
@@ -38,28 +38,31 @@ exports.index = function(req, res){
 };
 
 exports.get = function(req, res){
-	var infoRequest = req.params.id,
-		optionalParam = req.params.optionalParam,
-		platform = req.params.action,
+    var infoRequest = req.params.id,
+        optionalParam = req.params.optionalParam,
+        platform = req.params.action,
         serveToFrontEnd = null
 
     if (!optionalParam) {
         if(infoRequest === 'loadItems') {
+            serveToFrontEnd = true;
             functions.loadItems(req, res, serveToFrontEnd);
         }
-	}
+    }
 
     if(optionalParam === 'play'){
         var episode = infoRequest.replace(/\+/g, " ");
         functions.playEpisode(req, res,episode);
     }
-    
+
 };
 
-
 exports.post = function(req, res){
-    var infoRequest = req.params.id;
-    if(infoRequest === 'sendState'){
+    var data = req.body;
+    if(req.params.id === 'sendState'){
         functions.sendState(req, res);
+    }
+    else if(req.params.id === 'edit'){
+        functions.edit(req, res, data);
     }
 }

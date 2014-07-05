@@ -28,24 +28,23 @@ var express = require('express')
 	, mcjsRouting = require('./lib/routing/routing')
 	, remoteControl = require('./lib/utils/remote-control')
 	, versionChecker = require('./lib/utils/version-checker')
+    , scheduler = require('./lib/utils/scheduler')
 	, DeviceInfo = require('./lib/utils/device-utils')
     , fileHandler = require('./lib/utils/file-utils')
     , http = require('http')
 	, os = require('os')
 	, jade = require('jade')
-	, configuration_handler = require('./lib/handlers/configuration-handler')
-    , schedule = require('node-schedule')
-    , rule = new schedule.RecurrenceRule();
+    , open = require('open')
+	, configuration_handler = require('./lib/handlers/configuration-handler');
 
 var config = configuration_handler.initializeConfiguration();
-
+var ruleSchedule = null;
 var language = null;
 if(config.language === ""){
 	language = 'en';
 } else {
 	language = config.language;
 }
-
 
 /*Create database*/
 if(fs.existsSync('./lib/database/') === false){
@@ -85,29 +84,7 @@ app.configure(function(){
 	app.locals.basedir = __dirname + '/views';
 });
 
-// Schedule scraping every 30 minutes
-rule.minute = 30;
-var j = schedule.scheduleJob(rule, function(){
-    var moviesfunctions = require('./apps/movies/movie-functions')
-        , musicfunctions = require('./apps/music/music-functions')
-        , tvfunctions = require('./apps/tv/tv-functions')
-        , serveToFrontEnd = false
-        , req // Dummy variable
-        , res; // Dummy variable
-    
-    // Movies
-    moviesfunctions.loadItems(req, res, serveToFrontEnd);
-    
-    // Music
-    setTimeout(function(){    
-        musicfunctions.loadItems(req, res, serveToFrontEnd);
-    },10000);
-    
-    // TV
-    setTimeout(function(){    
-        tvfunctions.loadItems(req, res, serveToFrontEnd);
-    },20000);
-});
+
 
 /* CORS */
 app.all('*', function(req, res, next) {
@@ -137,7 +114,7 @@ app.get("/", function(req, res, next) {
 
     DeviceInfo.storeDeviceInfo(req);
 
-	if(	 config.language === '' || config.location === '' || config.moviepath === undefined){
+	if(config.language === '' || config.location === '' || config.moviepath === undefined){
 
 		var localIP = getIPAddresses()
 		, sendLocalIP = '';
@@ -216,27 +193,8 @@ app.get("/", function(req, res, next) {
                 apps: apps
             });
         });
-
-
 	}
 });
-
-function getIPAddresses() {
-	var ipAddresses = []
-	    , interfaces = require('os').networkInterfaces();
-
-	for (var devName in interfaces) {
-		var iface = interfaces[devName];
-		for (var i = 0; i < iface.length; i++) {
-			var alias = iface[i];
-			if (alias.family === 'IPv4' && alias.address !== '127.0.0.1' && !alias.internal) {
-				ipAddresses.push(alias.address);
-			}
-		}
-	}
-
-	return ipAddresses;
-}
 
 app.post('/lockClient', function(req, res){
     var incommingDevice = req.body;
@@ -268,6 +226,33 @@ app.post('/removeModule', function(req, res){
 	});
 });
 
+app.post('/getScraperData', function(req, res){
+    var incommingLink = req.body
+    , scraperlink = incommingLink.scraperlink
+    , moviesfunctions = require('./apps/movies/movie-functions')
+    , musicfunctions = require('./apps/music/music-functions')
+    , tvfunctions = require('./apps/tv/tv-functions')
+    , serveToFrontEnd = false
+    , req // Dummy variable
+    , res; // Dummy variable
+
+    if(scraperlink === 'movies'){
+        moviesfunctions.loadItems(req, res, serveToFrontEnd);
+    } else if (scraperlink === 'music'){
+        musicfunctions.loadItems(req, res, serveToFrontEnd);
+    } else if (scraperlink === 'tv'){
+        tvfunctions.loadItems(req, res, serveToFrontEnd);
+    }  else if(scraperlink === 'all'){
+        moviesfunctions.loadItems(req, res, serveToFrontEnd);
+        setTimeout(function(){    
+            musicfunctions.loadItems(req, res, serveToFrontEnd);
+        },10000);
+        setTimeout(function(){    
+            tvfunctions.loadItems(req, res, serveToFrontEnd);
+        },20000); 
+    }
+});
+
 app.post('/clearCache', function(req, res){
 	var app_cache_handler = require('./lib/handlers/app-cache-handler');
 	var incommingCache = req.body
@@ -282,13 +267,8 @@ app.post('/clearCache', function(req, res){
                 return res.send('Error clearing cache', e);
             }
 
-            var dblite = require('dblite')
-            if(os.platform() === 'win32'){
-                dblite.bin = "./bin/sqlite3/sqlite3";
-            }
-            var db = dblite('./lib/database/mcjs.sqlite');
-            db.on('info', function (text) { console.log(text) });
-            db.on('error', function (err) { console.error('Database error: ' + err) });
+            var database = require('./lib/utils/database-connection');
+            var db = database.db;
             db.query('DROP TABLE IF EXISTS ' + name);
 
 
@@ -296,8 +276,6 @@ app.post('/clearCache', function(req, res){
     });
 
     return res.send('done');
-
-
 });
 
 app.get('/checkForUpdate', function(req, res){
@@ -316,6 +294,54 @@ app.get('/doUpdate', function(req, res){
         unzip(req, res, output, dir);
     });
 });
+
+app.post('/setuppost', function(req, res){
+	configuration_handler.saveSettings(req.body, function() {
+		res.render('finish');
+	});
+});
+// Form  handlers
+
+app.get('/configuration', function(req, res){
+	res.send(config);
+});
+	
+app.post('/submit', function(req, res){
+	configuration_handler.saveSettings(req.body, function() {
+		res.redirect('/');
+	});
+});
+
+app.post('/submitRemote', function(req, res){
+	configuration_handler.saveSettings(req.body, function() {
+		res.redirect('/remote/');
+	});
+});
+
+//Socket.io Server
+remoteControl.remoteControl();
+
+//Scheduler
+scheduler.schedule();
+
+app.set('port', process.env.PORT || 3000);
+
+
+
+// Open App socket
+if (config.port == "" || config.port == undefined ){
+	var defaultPort = app.get('port');
+	console.log('First run, Setup running on localhost:' + defaultPort + "\n");
+	app.listen(parseInt(defaultPort));
+    var url = 'http://localhost:'+defaultPort;
+    open(url);
+    
+} else{
+	var message = "MediacenterJS listening on port:" + config.port + "\n";
+	console.log(message.green.bold);
+	app.listen(parseInt(config.port));
+}
+
 
 function unzip(req, res, output, dir){
     var src = 'https://codeload.github.com/jansmolders86/mediacenterjs/zip/master';
@@ -344,49 +370,30 @@ function unzip(req, res, output, dir){
     var AdmZip = require("adm-zip");
     var zip = new AdmZip(output);
     zip.extractAllTo(ExtractDir, true);
-    
+
     res.json('restarting');
     setTimeout(function(){
-         fs.openSync('./configuration/update.js', 'w');
+        fs.openSync('./configuration/update.js', 'w');
     },1000);
 }
 
+function getIPAddresses() {
+    var ipAddresses = []
+    , interfaces = require('os').networkInterfaces();
 
-app.post('/setuppost', function(req, res){
-	configuration_handler.saveSettings(req.body, function() {
-		res.render('finish');
-	});
-});
-// Form  handlers
+    for (var devName in interfaces) {
+        var iface = interfaces[devName];
+        for (var i = 0; i < iface.length; i++) {
+            var alias = iface[i];
+            if (alias.family === 'IPv4' && alias.address !== '127.0.0.1' && !alias.internal) {
+                ipAddresses.push(alias.address);
+            }
+        }
+    }
 
-app.get('/configuration', function(req, res){
-	res.send(config);
-});
-	
-app.post('/submit', function(req, res){
-	configuration_handler.saveSettings(req.body, function() {
-		res.redirect('/');
-	});
-});
-
-app.post('/submitRemote', function(req, res){
-	configuration_handler.saveSettings(req.body, function() {
-		res.redirect('/remote/');
-	});
-});
-
-//Socket.io Server
-remoteControl.remoteControl();
-
-app.set('port', process.env.PORT || 3000);
-
-// Open App socket
-if (config.port == "" || config.port == undefined ){
-	var defaultPort = app.get('port');
-	console.log('First run, Setup running on localhost:' + defaultPort + "\n");
-	app.listen(parseInt(defaultPort));
-} else{
-	var message = "MediacenterJS listening on port:" + config.port + "\n";
-	console.log(message.green.bold);
-	app.listen(parseInt(config.port));
+    return ipAddresses;
 }
+
+
+
+
