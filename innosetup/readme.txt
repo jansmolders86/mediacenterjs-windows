@@ -1,7 +1,7 @@
-Thank you for trying MediacenterJS preview
+Thank you for trying MediacenterJS Beta
 
-This is a preview build of MediacenterJS. 
-MediacenterJS is a mediacenter like for instance XBMC but based 100% on frontend techniques and languages (HTML5/CSS/Javascript). 
+This is a Beta build of MediacenterJS. 
+MediacenterJS is a media center based 100% on frontend techniques and languages. 
 
 Starting MediacenterJS:
 

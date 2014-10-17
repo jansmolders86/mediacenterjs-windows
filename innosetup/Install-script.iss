@@ -2,7 +2,7 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 
 #define MyAppName "MediacenterJS"
-#define MyAppVersion "0.0.70"
+#define MyAppVersion "0.1.0"
 #define MyAppPublisher "Jan Smolders"
 #define MyAppURL "http://www.mediacenterjs.com/"
 
@@ -13,7 +13,6 @@
 AppId={{099E345D-AB6D-47DA-ABEA-BB7DBB59B8D4}
 AppName={#MyAppName}
 AppVersion={#MyAppVersion}
-;AppVerName={#MyAppName} {#MyAppVersion}
 AppPublisher={#MyAppPublisher}
 AppPublisherURL={#MyAppURL}
 AppSupportURL={#MyAppURL}
@@ -21,11 +20,11 @@ AppUpdatesURL={#MyAppURL}
 DefaultDirName=C:\{#MyAppName}
 DefaultGroupName={#MyAppName}
 OutputBaseFilename=setup
-SetupIconFile=C:\Users\Jan\Documents\GitHub\mediacenterjs\public\core\favicon.ico
+SetupIconFile=C:\Users\jan.smolders\Documents\GitHub\mediacenterjs\public\core\favicon.ico
 Compression=lzma
 SolidCompression=yes
-LicenseFile=C:\Users\Jan\Documents\GitHub\mediacenterjs-windows\innosetup\gpl-3.0.txt
-InfoBeforeFile=C:\Users\Jan\Documents\GitHub\mediacenterjs-windows\innosetup\readme.txt
+LicenseFile=C:\Users\jan.smolders\Documents\GitHub\mediacenterjs-windows\innosetup\gpl-3.0.txt
+InfoBeforeFile=C:\Users\jan.smolders\Documents\GitHub\mediacenterjs-windows\innosetup\readme.txt
 ;ChangesEnvironment = yes   
 PrivilegesRequired = admin
 AlwaysRestart = yes
@@ -35,14 +34,12 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 
 
 [Files]
-Source: "C:\Users\Jan\Documents\GitHub\mediacenterjs-windows\dist\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs; Permissions: everyone-full
+Source: "C:\Users\jan.smolders\Documents\GitHub\mediacenterjs-windows\pack\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs; Permissions: everyone-full
 
 [Icons]
 Name: "{group}\mediacenterjs"; Filename: "{app}\mediacenterjs.exe";
-;Name: "{group}\mediacenterjs chrome"; Filename: "{pf32}\Google\Chrome\Application\chrome.exe"; Parameters: "--app=http://localhost:3000"; IconFilename: "C:\Users\Jan\Documents\GitHub\mediacenterjs\public\core\favicon.ico"
 
 ; postinstall launch
-
 [Code]
 begin
   if IsWin64 then
@@ -57,8 +54,7 @@ end.
 
 ; Add Firewall Rules
 Filename: "{sys}\netsh.exe"; Parameters: "advfirewall firewall add rule name=""Node In"" program=""{pf64}\nodejs\node.exe"" dir=in action=allow enable=yes"; Flags: runhidden;
-Filename: "{sys}\netsh.exe"; Parameters: "advfirewall firewall add rule name=""Node Out"" program=""{pf64}\nodejs\node.exe"" dir=out action=allow enable=yes"; Flags: runhidden;
-
+Filename: "{sys}\netsh.exe"; Parameters: "advfirewall firewall add rule name=""Node Out"" program=""{pf64}\nodejs\node.exe"" dir=out action=allow enable=yes"; Flags: runhidden
 
 [UninstallRun]
 ; Remove all leftovers
