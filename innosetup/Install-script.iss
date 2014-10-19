@@ -5,6 +5,7 @@
 #define MyAppVersion "0.1.0"
 #define MyAppPublisher "Jan Smolders"
 #define MyAppURL "http://www.mediacenterjs.com/"
+#define userName "Jan"
 
 [Setup]
 ; NOTE: The value of AppId uniquely identifies this application.
@@ -20,11 +21,11 @@ AppUpdatesURL={#MyAppURL}
 DefaultDirName=C:\{#MyAppName}
 DefaultGroupName={#MyAppName}
 OutputBaseFilename=setup
-SetupIconFile=C:\Users\jan.smolders\Documents\GitHub\mediacenterjs\public\core\favicon.ico
+SetupIconFile=C:\Users\{#userName}\Documents\GitHub\mediacenterjs\public\core\favicon.ico
 Compression=lzma
 SolidCompression=yes
-LicenseFile=C:\Users\jan.smolders\Documents\GitHub\mediacenterjs-windows\innosetup\gpl-3.0.txt
-InfoBeforeFile=C:\Users\jan.smolders\Documents\GitHub\mediacenterjs-windows\innosetup\readme.txt
+LicenseFile=C:\Users\{#userName}\Documents\GitHub\mediacenterjs-windows\innosetup\gpl-3.0.txt
+InfoBeforeFile=C:\Users\{#userName}\Documents\GitHub\mediacenterjs-windows\innosetup\readme.txt
 ;ChangesEnvironment = yes   
 PrivilegesRequired = admin
 AlwaysRestart = yes
@@ -34,7 +35,7 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 
 
 [Files]
-Source: "C:\Users\jan.smolders\Documents\GitHub\mediacenterjs-windows\pack\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs; Permissions: everyone-full
+Source: "C:\Users\{#userName}\Documents\GitHub\mediacenterjs-windows\pack\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs; Permissions: everyone-full
 
 [Icons]
 Name: "{group}\mediacenterjs"; Filename: "{app}\mediacenterjs.exe";
@@ -44,11 +45,11 @@ Name: "{group}\mediacenterjs"; Filename: "{app}\mediacenterjs.exe";
 begin
   if IsWin64 then
 [run]
-  Filename:"msiexec.exe"; Parameters: "/i ""{app}\dist\node\node-v0.10.26-x64.msi""" ; Check: Is64BitInstallMode
+  Filename:"msiexec.exe"; Parameters: "/i ""{app}\dist\node\node-v0.10.32-x64.msi""" ; Check: Is64BitInstallMode
 [Code]
   else
 [run]
-  Filename:"msiexec.exe"; Parameters: "/i ""{app}\dist\node\node-v0.10.26-x86.msi""" ; 
+  Filename:"msiexec.exe"; Parameters: "/i ""{app}\dist\node\node-v0.10.32-x86.msi""" ; 
 [Code]
 end.
 
