@@ -14,10 +14,10 @@ label {
     font-weight: 500;
 }
 
-a.cachelink,
+.cache-management a.btn,
 a.scraperlink,
 #oauth{
-    margin: 5px 20px;
+    margin: 5px 30px;
     display: block;
     float:none;
     text-overflow: ellipsis;
@@ -76,7 +76,7 @@ a.scraperlink,
 #setup input[type=text],
 #setup input[type=password],
 #setup select,
-#setup textarea { background:#dedede;}
+#setup textarea { background:#dedede; max-width: 80%;}
 
 
 .table>tbody>tr:nth-child(odd){

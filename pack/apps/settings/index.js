@@ -26,10 +26,15 @@ var express = require('express')
 , DeviceInfo = require('../../lib/utils/device-utils')
 , config = ini.parse(fs.readFileSync('./configuration/config.ini', 'utf-8'));
 
-exports.index = function(req, res, next){
 
-    DeviceInfo.storeDeviceInfo(req);
+getDevices = function (req, res) {
+    Device.findAll()
+     .success(function (devices) {
+        res.json(devices);
+     });
+}
 
+getData = function (req, res) {
     var allThemes = new Array()
     , availableLanguages = []
     , availablethemes = fs.readdirSync('./public/themes/')
@@ -59,43 +64,32 @@ exports.index = function(req, res, next){
         'low'
     ];
 
-    var tvFormatTypes = [
-        's00e00',
-        '0x00'
-    ]
+    loadCustomSettings(function(pluginSettings){
+        res.json({
+            availableLanguages : availableLanguages,
+            availableQuality : availableQuality,
+            availableScreensavers : availableScreensavers,
+            themes : availablethemes,
+            config : config,
+            pluginSettings  : pluginSettings,
+            countries : require('../../lib/utils/countries').countries
+        });
+    });
+}
+
+exports.index = function(req, res, next){
+
+    DeviceInfo.storeDeviceInfo(req);
 
     Device.findAll()
     .success(function (devices) {
-        DeviceInfo.isDeviceAllowed(req, function(allowed){
-            res.render('settings',{
-                movielocation           : config.moviepath,
-                selectedTheme           : config.theme,
-                musiclocation           : config.musicpath,
-                tvlocation              : config.tvpath,
-                tvFormatTypes           : tvFormatTypes,
-                tvFormat                : config.tvFormat,
-                selectedBinaryType      : config.binaries,
-                language                : config.language,
-                country                 : config.country,
-                countries               : require('../../lib/utils/countries').countries,
-                availableLanguages      : availableLanguages,
-                availableQuality        : availableQuality,
-                currentQuality          : config.quality,
-                availableScreensavers   : availableScreensavers,
-                location                : config.location,
-                screensaver             : config.screensaver,
-                spotifyUser             : config.spotifyUser,
-                spotifyPass             : config.spotifyPass,
-                themes                  : allThemes,
-                schedule                : config.schedule,
-                devices                 : devices,
-                allowed                 : allowed,
-                port                    : config.port,
-                oauth                   : config.oauth,
-                oauthKey                : config.oauthKey
+        DeviceInfo.isDeviceAllowed(req, function (allowed) {
+            res.render('settings', {
+                title: 'Settings',
+                selectedTheme: config.theme,
+                allowed: allowed
             });
         });
-
     });
 
 
@@ -113,8 +107,39 @@ exports.get = function(req, res, next) {
             }
             res.json({token: token});
         break;
+        case 'load':
+            getData(req, res);
+        break;
+        case 'devices':
+            getDevices(req, res);
+        break;
         default:
             next();
     }
 };
+
+
+function loadCustomSettings(callback){
+    var path = require('path');
+    var appDir = path.dirname(require.main.filename);
+    //search node_modules for plugins
+    var nodeModules = appDir + '/node_modules';
+    var pluginPrefix = config.pluginPrefix;
+
+    var plugSettings = new Array();
+    fs.readdirSync(nodeModules).forEach(function(name){
+        //Check if the folder in the node_modules starts with the prefix
+        if(name.substr(0, pluginPrefix.length) !== pluginPrefix){
+            return;
+        } else {
+            var pluginPath = nodeModules + '/' + name;
+            var pluginSettingsJSON = pluginPath + '/settings.json'
+            if(fs.existsSync( pluginSettingsJSON)){
+                var parsedJSON = require(pluginSettingsJSON)
+                plugSettings.push(parsedJSON);
+            };
+        }
+    });
+    callback(plugSettings);
+}
 

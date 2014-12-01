@@ -61,6 +61,18 @@ p a:hover{text-decoration:none;}
 .table>tbody>tr>td.active{ background:transparent; }
 .table>thead>tr>th{border:0;}
 
+.modal-content {
+    background-color: #3C3C3C;
+    border-radius: 0;
+}
+.modal-header, .modal-footer {
+    border-color: #595959;
+}
+.modal-content input[type=text] {
+    background: #595959;
+    color: white;
+}
+
 /* Homepage Tiles */
 
 @media (min-width:770px) {
@@ -127,6 +139,24 @@ p a:hover{text-decoration:none;}
 
 .tile img{ width:100%; height:100%;}
 .tile:hover{ cursor:pointer; }
+
+
+
+.tile.grow,
+.tile.plugin.grow{
+    position: fixed;
+    top: 0;
+    left: 0;
+    margin: 0;
+    width: 100%!important;
+    height: 100%!important;
+    z-index:9;
+    -webkit-transition: all 0.2s ease;
+    -moz-transition: all 0.2s ease;
+    -o-transition: all 0.2s ease;
+    transition: all 0.2s ease;
+    -webkit-user-select: none;
+}
 
 .upgrade-right {float:right; margin-right: 200px;}
 .upgrade{
@@ -238,7 +268,7 @@ label,
     float:left;
     display:block;
     font-size:16px;
-    font-weight:300;
+    font-weight:400;
     color:#fff;
     text-decoration:none;
     text-align:center;
@@ -302,7 +332,26 @@ label,
 #filter:-ms-input-placeholder::before  { font-family: Icons; content:'\f0c9  '; color: #ddd }
 #filter:-moz-placeholder::before  { font-family: Icons; content:'\f0c9  '; color: #ddd }
 
+/* SweetAlert override */
 
+.sweet-alert {
+    background: #3C3C3C;
+    border-radius: 0;
+}
+.sweet-alert p {
+    color: #c6c6c6;
+    font-weight: bold;
+}
+.sweet-alert button {
+    background-color: #fb8521 !important;
+    border-radius: 0;
+}
+.sweet-alert .icon.error {
+    border-color: #ef5654;
+}
+.sweet-alert .icon.error .line {
+    background-color: #ef5654;
+}
 /* Player */
 
 #player{
@@ -321,9 +370,6 @@ label,
 #oauthContainer{background:#43464F!important;}
 
 /***** -----------------   ANIMATIONS  ---------------------- *****/
-
-
-
 
 .glinein{
     -webkit-animation: glide-in 0.5s;
@@ -487,18 +533,23 @@ label,
 
 
 @media only screen and (min-width:771px){
-
     .tile img {
         width: 30%;
-        height: 100%;
+        padding-top: 40px;
+        padding-left: 10px;
+        height: auto;
         float: left;
     }
+
+    .tile.grow img{height:58%;opacity:1;}
 
     .tile{
         width: 18.5%;;
         height: 18em;
         background:#484c52;
     }
+
+    .tile span{ text-transform: capitalize;}
 
     .tile.movies{
         width:30%;
@@ -514,6 +565,7 @@ label,
     .tile.music{  background:#afcc12; }
     .tile.settings{  background:#e9b11c; }
     .tile.youtube{  background:#ffffff; }
+    .tile.youtube span{  color:#333; }
     .tile.weather{  background:#f86049; }
 
 }

@@ -1,6 +1,6 @@
 /*
-	MediaCenterJS - A NodeJS based mediacenter solution
-	
+    MediaCenterJS - A NodeJS based mediacenter solution
+
     Copyright (C) 2014 - Jan Smolders
 
     This program is free software: you can redistribute it and/or modify
@@ -17,18 +17,19 @@
 */
 var fs = require ('fs');
 var ajax_utils = require('../../lib/utils/ajax-utils');
-    
+var logger = require('winston');
+
 exports.checkVersion = function(req, res) {
-	var url = 'https://raw.github.com/jansmolders86/mediacenterjs/master/package.json';
-	ajax_utils.xhrCall(url, function(response) {
-		var obj = JSON.parse(fs.readFileSync('./package.json', 'utf8'));
-		var remote = JSON.parse(response);
-		if(remote.version > obj.version){
-		   var message = 'New version '+remote.version+' Available';
-            console.log(message);
-	  		res.json(message);
-		} else{
-			console.log('Current version up to date.')		
-		}
-	});
+    var url = 'https://raw.github.com/jansmolders86/mediacenterjs/master/package.json';
+    ajax_utils.xhrCall(url, function(response) {
+        var obj = JSON.parse(fs.readFileSync('./package.json', 'utf8'));
+        var remote = JSON.parse(response);
+        if(remote.version > obj.version){
+            var message = 'New version '+remote.version+' Available';
+            logger.info(message);
+            res.json(message);
+        } else{
+            logger.info('Current version up to date.');
+        }
+    });
 }

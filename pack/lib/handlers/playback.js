@@ -19,7 +19,28 @@
 var colors = require('colors')
 , os = require('os')
 , fs = require('fs.extra')
-, config = require('../../lib/handlers/configuration-handler').getConfiguration();
+, config = require('../../lib/handlers/configuration-handler').getConfiguration()
+,logger = require('winston');
+
+var CurrentTranscodings = {
+    desktop : {},
+    add : function (child, url, platform) {
+        this.desktop[url] = child;
+    },
+    remove : function(url, platform) {
+        delete this.desktop[url];
+    },
+    isTranscoding : function(url, platform) {
+        return this.desktop[url] !== undefined;
+    },
+    stopAll : function() {
+        Object.keys(this.desktop).forEach(function(key, index) {
+            this[key].kill();
+            delete this[key];
+        }, this.desktop);
+    }
+};
+
 
 /* Public Methods */
 
@@ -33,67 +54,60 @@ var colors = require('colors')
  * @param type              The type for which the playback needs to be started (eg, tv or movie)
  */
 exports.startPlayback = function(response,platform, mediaID, url, file, subtitleUrl, subtitleTitle, type) {
-    console.log('Getting ready to start playing '+file+' on '+platform);
+    logger.info('Getting ready to start playing '+file+' on '+platform);
     var fileName =  file.replace(/\.[^.]*$/,'')
     , outputName =  fileName.replace(/ /g,"-")
     , ExecConfig = {  maxBuffer: 9000*1024 }
     , outputPath = "./public/data/"+type+"/"+outputName+".mp4"
     , hasSub = false;
 
-    getDuration(response, url, file, mediaID, type, function(data){
-        var duration = data;
+    getDuration(response, url, file, mediaID, type, function(duration){
+        fs.mkdirp("./public/data/"+type+"/", function(err) {
+            // Check if subtitles exist and write them to data folder
+            if(fs.existsSync(subtitleUrl)){
+                var subOutput = "./public/data/movies/"+subtitleTitle;
+                fs.writeFileSync(subOutput, fs.readFileSync(subtitleUrl));
+                hasSub = true;
+            }
 
-        // Check if subtitles exist and write them to data folder
-        if(fs.existsSync(subtitleUrl)){
-            var subOutput = "./public/data/movies/"+subtitleTitle;
-            fs.writeFileSync(subOutput, fs.readFileSync(subtitleUrl));
-            hasSub = true;
-        }
-
-        checkProgression(mediaID, type, function(data){
-            var progression = data.progression;
-
-            if(data.transcodingstatus === 'pending' || data.transcodingstatus === undefined){
-                console.log('Previously transcoding of this file was not completed');
-                fs.exists("./public/data/", function(dataExists) {
-                    if (!dataExists) {
-                        fs.mkdirSync("./public/data/");
-                    }
-                    fs.exists("./public/data/"+type+"/", function(exists){
-                        if(!exists){
-                            fs.mkdirSync("./public/data/"+type);
-                        }
+            checkProgression(mediaID, type, function(data){
+                if(data.transcodingstatus === 'pending' || data.transcodingstatus === undefined){
+                    logger.warn('Previously transcoding of this file was not completed');
 
                         fs.exists(outputPath, function(exists){
-                            if(exists){
+                            if(exists && !CurrentTranscodings.isTranscoding(url)){
                                 fs.unlinkSync(outputPath);
                             }
 
                             if(fs.existsSync(url)){
                                 startTranscoding(mediaID, type, response,url,platform, file, outputPath, ExecConfig);
                             } else{
-                                console.log('File '+ url + 'not found, did you move or delete it?');
+                                logger.warn('File '+ url + 'not found, did you move or delete it?');
                             }
                         });
 
-                    });
-                });
 
-            } else {
-                console.log('File '+file+' already trancoded with quality level: '+config.quality +'. Continuing with playback.');
-            }
+                } else {
+                    logger.info('File '+file+' already trancoded with quality level: '+config.quality +'. Continuing with playback.');
+                }
 
-            var fileInfo = {
-                'duration'      : duration,
-                'progression'   : progression,
-                'subtitle'      : hasSub
-            }
+                var fileInfo = {
+                    'duration'      : duration,
+                    'progression'   : data.progression,
+                    'subtitle'      : hasSub
+                }
 
-            response.json(fileInfo);
-
+                if(platform === 'desktop'){
+                    response.json(fileInfo);
+                }
+            });
         });
     });
 };
+
+exports.stopTranscoding = function() {
+    CurrentTranscodings.stopAll();
+}
 
 /* Private Methods */
 
@@ -102,16 +116,16 @@ getDuration = function(response, url, file, mediaID, type, callback) {
     probe(url, function(err, probeData) {
         if(!err){
             if(probeData !== undefined || probeData.streams[0].duration !== 0 && probeData.streams[0].duration !== undefined && probeData.streams[0].duration !== "N/A" ){
-                console.log('Found duration "'+probeData.streams[0].duration+'" in metadata, continuing...');
+                logger.info('Found duration "'+probeData.streams[0].duration+'" in metadata, continuing...');
                 var data = probeData.streams[0].duration;
                 callback(data);
             } else if(type === 'movie'){
-                console.log('Falling back to database runtime information' .blue);
+                logger.info('Falling back to database runtime information');
                 getDurationFromDatabase(mediaID, function(data){
                     if(data !== null){
                         callback(data);
                     } else{
-                        console.log('Unknown file duration, falling back to estimated duration.' .red);
+                        logger.info('Unknown file duration, falling back to estimated duration.');
                         var data = 9000;
                         callback(data);
                     }
@@ -119,7 +133,7 @@ getDuration = function(response, url, file, mediaID, type, callback) {
 
             }
         }else {
-            console.log('Using fallback length due to error: ',err);
+            logger.warn('Using fallback length due to error: ',err);
             var data = 9000;
             callback(data);
         }
@@ -195,142 +209,93 @@ startTranscoding = function(mediaID, type, response, url, platform,file, outputP
 }
 
 browserTranscoding = function(mediaID, type, response, url, platform,file, outputPath, ExecConfig){
-
+    var TRANSCODING_OPTS = [
+        '-threads 0',
+        '-vcodec libx264',
+        '-coder 0',
+        '-flags -loop',
+        '-pix_fmt yuv420p',
+        '-subq 0',
+        '-sc_threshold 0',
+        '-profile:v baseline',
+        '-keyint_min 150',
+        '-deinterlace -maxrate 10000000',
+        '-bufsize 10000000',
+        '-acodec aac',
+        '-strict experimental',
+        '-frag_duration 1000',
+        '-movflags +frag_keyframe+empty_moov'
+    ];
     if(config.quality === 'lossless' ){
-
-        var TRANSCODING_OPTS = [
-            '-threads 0',
-            '-vcodec libx264',
-            '-coder 0',
-            '-flags -loop',
-            '-pix_fmt yuv420p',
+        TRANSCODING_OPTS = TRANSCODING_OPTS.concat([
             '-crf 0',
-            '-subq 0',
-            '-sc_threshold 0',
-            '-profile:v baseline',
-            '-keyint_min 150',
-            '-deinterlace -maxrate 10000000',
-            '-bufsize 10000000',
-            '-acodec aac',
-            '-strict experimental',
-            '-frag_duration 1000',
-            '-movflags +frag_keyframe+empty_moov'
-        ];
-
+        ]);
     } else if (config.quality === 'high' || config.quality === undefined){
-
-        var TRANSCODING_OPTS = [
+        TRANSCODING_OPTS = TRANSCODING_OPTS.concat([
             '-g 52',
-            '-threads 0',
-            '-vcodec libx264',
-            '-coder 0',
-            '-flags -loop',
-            '-pix_fmt yuv420p',
             '-crf 22',
-            '-subq 0',
-            '-sc_threshold 0',
-            '-profile:v baseline',
-            '-keyint_min 150',
-            '-deinterlace -maxrate 10000000',
-            '-bufsize 10000000',
-            '-acodec aac',
             '-ar 48000',
             '-ab 320k',
-            '-strict experimental',
-            '-frag_duration 1000',
-            '-movflags +frag_keyframe+empty_moov'
-        ];
-
+        ]);
     } else if (config.quality === 'medium'){
-
-        var TRANSCODING_OPTS = [
+        TRANSCODING_OPTS = TRANSCODING_OPTS.concat([
             '-g 52',
-            '-threads 0',
-            '-vcodec libx264',
-            '-coder 0',
-            '-flags -loop',
-            '-pix_fmt yuv420p',
             '-crf 25',
-            '-subq 0',
-            '-sc_threshold 0',
             '-s 1280x720',
-            '-profile:v baseline',
-            '-keyint_min 150',
-            '-deinterlace -maxrate 10000000',
-            '-bufsize 10000000',
-            '-acodec aac',
             '-ar 48000',
             '-ab 192k',
-            '-strict experimental',
-            '-frag_duration 1000',
-            '-movflags +frag_keyframe+empty_moov'
-        ];
-
+        ]);
     } else if (config.quality === 'low'){
-
-        var TRANSCODING_OPTS = [
+        TRANSCODING_OPTS = TRANSCODING_OPTS.concat([
             '-g 52',
-            '-threads 0',
-            '-vcodec libx264',
-            '-coder 0',
-            '-flags -loop',
-            '-pix_fmt yuv420p',
             '-crf 30',
-            '-subq 0',
-            '-sc_threshold 0',
             '-s 720x480',
-            '-profile:v baseline',
-            '-keyint_min 150',
-            '-deinterlace -maxrate 10000000',
-            '-bufsize 10000000',
-            '-acodec aac',
             '-ar 48000',
             '-ab 128k',
-            '-strict experimental',
-            '-frag_duration 1000',
-            '-movflags +frag_keyframe+empty_moov'
-        ];
-
+        ]);
     }
 
-    var transcodingOpts = TRANSCODING_OPTS.join().replace(/,/g, " ");
+    var transcodingOpts = TRANSCODING_OPTS.join(" ");
     var ffmpeg = 'ffmpeg -i "'+url+'" ' + transcodingOpts + ' "'+outputPath+'"';
-
-    console.log('Starting transcoding for', platform);
-
-    var exec = require('child_process').exec
-    , child = exec(ffmpeg, ExecConfig, function(err, stdout, stderr) {
-        if (err) {
-            console.log('FFMPEG error: ',err) ;
-        } else{
-            console.log('Transcoding complete');
-            var progData = {EpisodeId : mediaID};
-            if (type === "movie") {
-                progData = {MovieId : mediaID};
-            }
-            ProgressionMarker.find({where: progData})
-            .success(function (progressionmarker) {
-                progressionmarker.updateAttributes({
-                    transcodingStatus : "done"
+    if (CurrentTranscodings.isTranscoding(url)) {
+        logger.info('Already transcoding', url);
+    } else {
+        logger.info('Starting transcoding for', platform);
+        var exec = require('child_process').exec
+        , child = exec(ffmpeg, ExecConfig, function(err, stdout, stderr) {
+            if (err) {
+                logger.error('FFMPEG error: ',err) ;
+            } else{
+                logger.info('Transcoding complete');
+                CurrentTranscodings.remove(url);
+                var progData = {EpisodeId : mediaID};
+                if (type === "movie") {
+                    progData = {MovieId : mediaID};
+                }
+                ProgressionMarker.find({where: progData})
+                .success(function (progressionmarker) {
+                    progressionmarker.updateAttributes({
+                        transcodingStatus : "done"
+                    });
                 });
-            });
-        }
-    });
-    child.stdout.on('data', function(data) {
-        console.log(data.toString());
-    });
-    child.stderr.on('data', function(data) {
-        console.log(data.toString());
-    });
-    child.on('exit', function() {
-        console.error('Child process exited');
-    });
-
+            }
+        });
+        CurrentTranscodings.add(child, url);
+        child.stdout.on('data', function(data) {
+            logger.info(data.toString());
+        });
+        child.stderr.on('data', function(data) {
+            logger.info(data.toString());
+        });
+        child.on('exit', function() {
+            CurrentTranscodings.remove(url);
+        });
+    }
 }
 
 
 iosTranscoding = function(response, url, platform,file, outputPath, ExecConfig, ffmpeg, MOBILE_FFMPEG_OPTS, ffmpegPath, FFMPEG_TIMEOUT){
-    console.log('Starting transcoding for', platform);
+    logger.info('Starting transcoding for', platform);
     var IOS_FFMPEG_OPTS = [
         '-vcodec libx264',
         '-pix_fmt yuv420p',
@@ -363,11 +328,7 @@ iosTranscoding = function(response, url, platform,file, outputPath, ExecConfig, 
 }
 
 androidTranscoding = function(response, url, platform,file, outputPath, ExecConfig, ffmpeg, MOBILE_FFMPEG_OPTS, ffmpegPath, FFMPEG_TIMEOUT){
-    console.log('Starting transcoding for', platform);
-    response.writeHead(200, {
-        'Content-Type':'video/webm',
-        'Content-Length':file.size
-    });
+    logger.info('Starting transcoding for', platform);
 
     var ANDROID_FFMPEG_OPTS = [
         '-vcodec libx264',
@@ -382,6 +343,11 @@ androidTranscoding = function(response, url, platform,file, outputPath, ExecConf
         '-movflags',
         'frag_keyframe+empty_moov']
     .concat(MOBILE_FFMPEG_OPTS);
+
+    response.writeHead(200, {
+        'Content-Type':'video/webm',
+        'Content-Length':file.size
+    });
 
     var proc = new ffmpeg({ source: url, nolog: true, timeout: FFMPEG_TIMEOUT })
     if(os.platform() === 'win32'){
