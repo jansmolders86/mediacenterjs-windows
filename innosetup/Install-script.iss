@@ -5,6 +5,8 @@
 #define MyAppVersion "Beta"
 #define MyAppPublisher "Jan Smolders"
 #define MyAppURL "http://www.mediacenterjs.com/"
+#define localUser "Jan"
+
 
 [Setup]
 ; NOTE: The value of AppId uniquely identifies this application.
@@ -20,11 +22,11 @@ AppUpdatesURL={#MyAppURL}
 DefaultDirName=C:\{#MyAppName}
 DefaultGroupName={#MyAppName}
 OutputBaseFilename=setup
-SetupIconFile=C:\Users\jan.smolders\Documents\GitHub\mediacenterjs\public\core\favicon.ico
+SetupIconFile=C:\Users\{localUser}\Documents\GitHub\mediacenterjs\public\core\favicon.ico
 Compression=lzma
 SolidCompression=yes
-LicenseFile=C:\Users\jan.smolders\Documents\GitHub\mediacenterjs-windows\innosetup\gpl-3.0.txt
-InfoBeforeFile=C:\Users\jan.smolders\Documents\GitHub\mediacenterjs-windows\innosetup\readme.txt
+LicenseFile=C:\Users\{localUser}\Documents\GitHub\mediacenterjs-windows\innosetup\gpl-3.0.txt
+InfoBeforeFile=C:\Users\{localUser}\Documents\GitHub\mediacenterjs-windows\innosetup\readme.txt
 ChangesEnvironment = yes   
 PrivilegesRequired = admin
 
@@ -32,8 +34,8 @@ PrivilegesRequired = admin
 Name: "english"; MessagesFile: "compiler:Default.isl"
 
 [Files]
-Source: "C:\Users\jan.smolders\Documents\GitHub\mediacenterjs\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs; Permissions: everyone-full; 
-Source: "C:\Users\jan.smolders\Documents\GitHub\mediacenterjs\package.json"; DestDir: "{app}"; Flags: ignoreversion; AfterInstall:LaunchApplication();
+Source: "C:\Users\{localUser}\Documents\GitHub\mediacenterjs\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs; Permissions: everyone-full; 
+Source: "C:\Users\{localUser}\Documents\GitHub\mediacenterjs\package.json"; DestDir: "{app}"; Flags: ignoreversion; AfterInstall:LaunchApplication();
 
 [Icons]
 Name: "{group}\mediacenterjs"; Filename: "{app}\mediacenterjs.exe";
