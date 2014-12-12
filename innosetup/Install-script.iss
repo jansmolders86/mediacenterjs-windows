@@ -31,10 +31,9 @@ PrivilegesRequired = admin
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
 
-
 [Files]
-Source: "C:\Users\jan.smolders\Documents\GitHub\mediacenterjs-windows\pack\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs; Permissions: everyone-full; 
-;Source: "C:\Users\jan.smolders\Documents\GitHub\mediacenterjs-windows\pack\package.json"; DestDir: "{app}"; Flags: ignoreversion; AfterInstall:LaunchApplication();
+Source: "C:\Users\jan.smolders\Documents\GitHub\mediacenterjs\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs; Permissions: everyone-full; 
+Source: "C:\Users\jan.smolders\Documents\GitHub\mediacenterjs\package.json"; DestDir: "{app}"; Flags: ignoreversion; AfterInstall:LaunchApplication();
 
 [Icons]
 Name: "{group}\mediacenterjs"; Filename: "{app}\mediacenterjs.exe";
@@ -43,20 +42,20 @@ Name: "{group}\mediacenterjs"; Filename: "{app}\mediacenterjs.exe";
 ; set PATH
 Root: HKCU; Subkey: "Environment"; ValueType:string; ValueName:"PATH"; ValueData:"{olddata};{app}\bin\ffmpeg"; Flags: preservestringtype;
 
-; NPM install  (not used because NPM install isn't very reliable to install everything
-;[Code]
-;procedure LaunchApplication();
-;  var
-;    C, P, D: String; E:Integer;
-;  begin
-;    C:= 'npm';
-;    P:= 'install';
-;    D:= ExpandConstant('{app}');
-;    if not ShellExec('', C, P, D, SW_SHOW, ewWaitUntilTerminated, E) then begin
-;      E:= -1;
-;    end;
-;  end;
-;end.
+; NPM install rest of dependencies
+[Code]
+procedure LaunchApplication();
+  var
+    C, P, D: String; E:Integer;
+  begin
+    C:= 'npm';
+    P:= 'install';
+    D:= ExpandConstant('{app}');
+    if not ShellExec('', C, P, D, SW_SHOW, ewWaitUntilTerminated, E) then begin
+      E:= -1;
+    end;
+  end;
+end.
 
 ; Add Firewall Rules for NodeJs
 ;Filename: "{sys}\netsh.exe"; Parameters: "advfirewall firewall add rule name=""Node In"" program=""{pf64}\nodejs\node.exe"" dir=in action=allow enable=yes"; Flags: runhidden;
