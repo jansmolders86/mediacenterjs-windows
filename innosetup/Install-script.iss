@@ -22,11 +22,11 @@ AppUpdatesURL={#MyAppURL}
 DefaultDirName=C:\{#MyAppName}
 DefaultGroupName={#MyAppName}
 OutputBaseFilename=setup
-SetupIconFile=C:\Users\{localUser}\Documents\GitHub\mediacenterjs\public\core\favicon.ico
+SetupIconFile=C:\Users\{#localUser}\Documents\GitHub\mediacenterjs\public\core\favicon.ico
 Compression=lzma
 SolidCompression=yes
-LicenseFile=C:\Users\{localUser}\Documents\GitHub\mediacenterjs-windows\innosetup\gpl-3.0.txt
-InfoBeforeFile=C:\Users\{localUser}\Documents\GitHub\mediacenterjs-windows\innosetup\readme.txt
+LicenseFile=C:\Users\{#localUser}\Documents\GitHub\mediacenterjs-windows\innosetup\gpl-3.0.txt
+InfoBeforeFile=C:\Users\{#localUser}\Documents\GitHub\mediacenterjs-windows\innosetup\readme.txt
 ChangesEnvironment = yes   
 PrivilegesRequired = admin
 
@@ -34,8 +34,8 @@ PrivilegesRequired = admin
 Name: "english"; MessagesFile: "compiler:Default.isl"
 
 [Files]
-Source: "C:\Users\{localUser}\Documents\GitHub\mediacenterjs\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs; Permissions: everyone-full; 
-Source: "C:\Users\{localUser}\Documents\GitHub\mediacenterjs\package.json"; DestDir: "{app}"; Flags: ignoreversion; AfterInstall:LaunchApplication();
+Source: "C:\Users\{#localUser}\Documents\GitHub\mediacenterjs\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs; Permissions: everyone-full; 
+Source: "C:\Users\{#localUser}\Documents\GitHub\mediacenterjs\package.json"; DestDir: "{app}"; Flags: ignoreversion; AfterInstall:LaunchApplication();
 
 [Icons]
 Name: "{group}\mediacenterjs"; Filename: "{app}\mediacenterjs.exe";
@@ -51,7 +51,7 @@ procedure LaunchApplication();
     C, P, D: String; E:Integer;
   begin
     C:= 'npm';
-    P:= 'install';
+    P:= 'install --force --verbose';
     D:= ExpandConstant('{app}');
     if not ShellExec('', C, P, D, SW_SHOW, ewWaitUntilTerminated, E) then begin
       E:= -1;
