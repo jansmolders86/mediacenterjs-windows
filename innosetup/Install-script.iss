@@ -51,7 +51,7 @@ procedure LaunchApplication();
     C, P, D: String; E:Integer;
   begin
     C:= 'npm';
-    P:= 'install --force --verbose';
+    P:= 'install';
     D:= ExpandConstant('{app}');
     if not ShellExec('', C, P, D, SW_SHOW, ewWaitUntilTerminated, E) then begin
       E:= -1;
