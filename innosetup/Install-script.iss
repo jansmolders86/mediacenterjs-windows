@@ -59,10 +59,6 @@ procedure LaunchApplication();
   end;
 end.
 
-; Add Firewall Rules for NodeJs
-;Filename: "{sys}\netsh.exe"; Parameters: "advfirewall firewall add rule name=""Node In"" program=""{pf64}\nodejs\node.exe"" dir=in action=allow enable=yes"; Flags: runhidden;
-;Filename: "{sys}\netsh.exe"; Parameters: "advfirewall firewall add rule name=""Node Out"" program=""{pf64}\nodejs\node.exe"" dir=out action=allow enable=yes"; Flags: runhidden;
-
 [UninstallRun]
 ; Remove all leftovers
 Filename: "{sys}\rmdir"; Parameters: "-r ""{app}""";
